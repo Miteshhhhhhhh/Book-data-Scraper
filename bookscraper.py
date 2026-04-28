@@ -2,22 +2,27 @@ import requests
 from bs4 import BeautifulSoup
 from openpyxl import Workbook, load_workbook
 
-url = "https://books.toscrape.com"
-result = requests.get(url)
-
-soup = BeautifulSoup(result.text, "html.parser")
-
-books = soup.find_all("h3")
-prices = soup.find_all("p", class_="price_color")
-
 wb = Workbook()
 ws = wb.active
-ws.append(["TITLE", "PRICE"])
+ws.append(["TITLE", "PRICE", "STOCK", "RATING"])
 
-for book,price in zip(books, prices):
-    ws.append([book.text, price.text])
+for page in range(1,51):
+    url = f"https://books.toscrape.com/catalogue/page-{page}.html"
+    result = requests.get(url)
+    result.encoding = "utf-8"
+    soup = BeautifulSoup(result.text, "html.parser")
 
-wb.save("Menu.xlsx")
+    books = soup.find_all("h3")
+    prices = soup.find_all("p", class_="price_color")
+    stock = soup.find_all("p", class_="instock availability")
+    ratings = soup.find_all("p", class_="star-rating")
+
+
+    for book,price,stock,rating in zip(books, prices, stock, ratings):
+        ws.append([book.text, price.text, stock.text, rating["class"][1]])
+
+wb.save("books_data.xlsx")
 
 import os
-os.startfile("Menu.xlsx")
+os.startfile("books_data.xlsx")
+
